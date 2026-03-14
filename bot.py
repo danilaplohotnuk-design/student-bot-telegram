@@ -12,7 +12,7 @@ except ImportError:
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from aiogram.client.default import DefaultBotProperties
 
 # ================= НАЛАШТУВАННЯ =================
@@ -56,11 +56,12 @@ dp = Dispatcher()
 
 
 def get_schedule_keyboard():
-    """Старий варіант: звичайна кнопка-посилання (відкривається в браузері)."""
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="📱 Відкрити розклад", url=WEB_APP_URL)]
-        ]
+    """Велика кнопка внизу з написом «Розклад» — відкриває веб-додаток (або посилання)."""
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="📅 Розклад", web_app=WebAppInfo(url=WEB_APP_URL))]
+        ],
+        resize_keyboard=True,
     )
 
 
@@ -69,7 +70,7 @@ async def cmd_start(message: types.Message):
     await message.answer(
         "Привіт! 👋\n\n"
         "Я бот для студентів — тут ти можеш швидко відкрити розклад занять.\n\n"
-        "Кнопка внизу 👇 або посилання:\n" + WEB_APP_URL,
+        "Натисни велику кнопку внизу 👇",
         reply_markup=get_schedule_keyboard(),
     )
 
@@ -79,7 +80,7 @@ async def any_message(message: types.Message):
     if message.text and "відкрити" in message.text.lower():
         return
     await message.answer(
-        "Розклад та Zoom — у додатку. Кнопка внизу або посилання:\n" + WEB_APP_URL,
+        "Розклад та Zoom — натисни кнопку внизу 👇",
         reply_markup=get_schedule_keyboard(),
     )
 

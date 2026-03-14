@@ -12,7 +12,7 @@ except ImportError:
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import MenuButtonWebApp, WebAppInfo
 from aiogram.client.default import DefaultBotProperties
 
 # ================= НАЛАШТУВАННЯ =================
@@ -21,8 +21,9 @@ TOKEN = os.environ.get("BOT_TOKEN")
 if not TOKEN:
     raise SystemExit("BOT_TOKEN не заданий. Додай у .env або в змінні середовища (наприклад на Render).")
 
-# URL веб-додатку (розклад). HTTPS, без слеша в кінці. На хмарі вкажи свій Render.
-WEB_APP_URL = (os.environ.get("WEB_APP_URL") or "https://student-bot3.onrender.com").rstrip("/")
+# URL веб-додатку (розклад). HTTPS обов'язково — інакше кнопка не відкриється як посилання.
+_raw_url = (os.environ.get("WEB_APP_URL") or "https://student-bot3.onrender.com").strip().rstrip("/")
+WEB_APP_URL = _raw_url if _raw_url.startswith(("http://", "https://")) else "https://" + _raw_url
 
 # Порт для health-check на хмарі (Render тощо). Якщо не задано — сервер не запускається (лише бот).
 PORT = os.environ.get("PORT")
@@ -55,25 +56,14 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode="Markdown"))
 dp = Dispatcher()
 
 
-def get_schedule_link_markup():
-    """Одна інлайн-кнопка — посилання на веб-додаток (синя в Telegram)."""
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Відкрити розклад", url=WEB_APP_URL)]
-        ]
-    )
-
-
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    # При запуску тільки інлайн-кнопка — активне посилання на веб-додаток
-    await message.answer(".", reply_markup=get_schedule_link_markup())
+    await message.answer("Натисни синю кнопку внизу зліва — відкриється розклад.")
 
 
 @dp.message()
 async def any_message(message: types.Message):
-    # На будь-яке повідомлення — та сама інлайн-кнопка з посиланням
-    await message.answer(".", reply_markup=get_schedule_link_markup())
+    await message.answer("Натисни синю кнопку внизу зліва.")
 
 
 async def main():
@@ -84,6 +74,14 @@ async def main():
         logger.info("Webhook видалено, запускаємо polling.")
     except Exception as e:
         logger.warning("delete_webhook: %s", e)
+    # Синя кнопка біля поля вводу (меню бота) — відкриває веб-додаток
+    try:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(text="Відкрити розклад", web_app=WebAppInfo(url=WEB_APP_URL))
+        )
+        logger.info("Кнопка меню (Web App) встановлена.")
+    except Exception as e:
+        logger.warning("set_chat_menu_button: %s", e)
     logger.info("Бот запущено. WEB_APP_URL=%s", WEB_APP_URL)
     await dp.start_polling(bot)
 

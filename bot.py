@@ -12,12 +12,12 @@ except ImportError:
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.client.default import DefaultBotProperties
 
 # ================= НАЛАШТУВАННЯ =================
 # Токен тільки зі змінної середовища — можна запускати на будь-якому боті (в .env локально, на Render — Environment)
-TOKEN = os.environ.get("BOT_TOKEN")
+TOKEN = os.environ.get("8555170398:AAHmwlzUtuUuQf0UQK4quS_cuCsgwa53960")
 if not TOKEN:
     raise SystemExit("BOT_TOKEN не заданий. Додай у .env або в змінні середовища (наприклад на Render).")
 
@@ -56,12 +56,21 @@ dp = Dispatcher()
 
 
 def get_schedule_keyboard():
-    """Велика кнопка внизу з написом «Розклад» — відкриває веб-додаток (або посилання)."""
+    """Велика кнопка внизу екрану з написом «Розклад» (без Web App — стабільно показується)."""
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="📅 Розклад", web_app=WebAppInfo(url=WEB_APP_URL))]
+            [KeyboardButton(text="📅 Розклад")]
         ],
         resize_keyboard=True,
+    )
+
+
+def get_schedule_link_markup():
+    """Інлайн-кнопка з посиланням (відправляється після натискання великої кнопки)."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Відкрити розклад", url=WEB_APP_URL)]
+        ]
     )
 
 
@@ -77,6 +86,13 @@ async def cmd_start(message: types.Message):
 
 @dp.message()
 async def any_message(message: types.Message):
+    # Натиснули велику кнопку «Розклад» — даємо посилання
+    if message.text and message.text.strip() == "📅 Розклад":
+        await message.answer(
+            "Відкрий розклад за посиланням 👇",
+            reply_markup=get_schedule_link_markup(),
+        )
+        return
     if message.text and "відкрити" in message.text.lower():
         return
     await message.answer(

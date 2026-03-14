@@ -12,7 +12,7 @@ except ImportError:
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.client.default import DefaultBotProperties
 
 # ================= НАЛАШТУВАННЯ =================
@@ -55,18 +55,8 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode="Markdown"))
 dp = Dispatcher()
 
 
-def get_schedule_keyboard():
-    """Велика кнопка внизу екрану з написом «Розклад» (без Web App — стабільно показується)."""
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="📅 Розклад")]
-        ],
-        resize_keyboard=True,
-    )
-
-
 def get_schedule_link_markup():
-    """Інлайн-кнопка з посиланням (відправляється після натискання великої кнопки)."""
+    """Одна інлайн-кнопка — посилання на веб-додаток (синя в Telegram)."""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="Відкрити розклад", url=WEB_APP_URL)]
@@ -76,29 +66,14 @@ def get_schedule_link_markup():
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.answer(
-        "Привіт! 👋\n\n"
-        "Я бот для студентів — тут ти можеш швидко відкрити розклад занять.\n\n"
-        "Натисни велику кнопку внизу 👇",
-        reply_markup=get_schedule_keyboard(),
-    )
+    # При запуску тільки інлайн-кнопка — активне посилання на веб-додаток
+    await message.answer(".", reply_markup=get_schedule_link_markup())
 
 
 @dp.message()
 async def any_message(message: types.Message):
-    # Натиснули велику кнопку «Розклад» — даємо посилання
-    if message.text and message.text.strip() == "📅 Розклад":
-        await message.answer(
-            "Відкрий розклад за посиланням 👇",
-            reply_markup=get_schedule_link_markup(),
-        )
-        return
-    if message.text and "відкрити" in message.text.lower():
-        return
-    await message.answer(
-        "Розклад та Zoom — натисни кнопку внизу 👇",
-        reply_markup=get_schedule_keyboard(),
-    )
+    # На будь-яке повідомлення — та сама інлайн-кнопка з посиланням
+    await message.answer(".", reply_markup=get_schedule_link_markup())
 
 
 async def main():

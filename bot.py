@@ -17,7 +17,7 @@ from aiogram.client.default import DefaultBotProperties
 
 # ================= НАЛАШТУВАННЯ =================
 # Токен тільки зі змінної середовища — можна запускати на будь-якому боті (в .env локально, на Render — Environment)
-TOKEN = os.environ.get("8555170398:AAHmwlzUtuUuQf0UQK4quS_cuCsgwa53960")
+TOKEN = os.environ.get("BOT_TOKEN")
 if not TOKEN:
     raise SystemExit("BOT_TOKEN не заданий. Додай у .env або в змінні середовища (наприклад на Render).")
 
@@ -103,6 +103,12 @@ async def any_message(message: types.Message):
 
 async def main():
     run_health_server()
+    # Якщо для бота вже був webhook (наприклад з tg-schedule-app), Telegram не дасть робити polling. Видаляємо webhook.
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("Webhook видалено, запускаємо polling.")
+    except Exception as e:
+        logger.warning("delete_webhook: %s", e)
     logger.info("Бот запущено. WEB_APP_URL=%s", WEB_APP_URL)
     await dp.start_polling(bot)
 

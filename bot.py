@@ -83,6 +83,9 @@ async def main():
     except Exception as e:
         logger.warning("set_chat_menu_button: %s", e)
     logger.info("Бот запущено. WEB_APP_URL=%s", WEB_APP_URL)
+    # Затримка перед polling: під час деплою старий інстанс ще вмикається — чекаємо, щоб уникнути Conflict
+    await asyncio.sleep(45)
+    logger.info("Запуск polling.")
     await dp.start_polling(bot)
 
 
